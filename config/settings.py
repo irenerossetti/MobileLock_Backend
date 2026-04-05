@@ -118,7 +118,7 @@ SIMPLE_JWT = {
 
 # ==================== CORS ====================
 # Configuración CORS dinámica
-cors_allowed_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
+cors_allowed_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173')
 
 if cors_allowed_origins_env == '*':
     CORS_ALLOW_ALL_ORIGINS = True
