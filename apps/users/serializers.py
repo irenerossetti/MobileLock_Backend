@@ -36,5 +36,16 @@ class RegisterSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
+        validated_data["username"] = validated_data.get("correo_electronico")
         user = Usuario.objects.create_user(**validated_data)
         return user
+    
+class UpdateUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "nombres",
+            "apellido_paterno",
+            "apellido_materno"
+        ]

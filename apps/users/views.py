@@ -5,8 +5,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.users.models import Usuario
-
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import RegisterSerializer, UserSerializer, UpdateUserSerializer
 from .services import UserService
 
 
@@ -15,23 +14,25 @@ class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-
-        user = UserService.get_user_profile(request.user.id)
-
+        """
+        Obtener perfil del usuario autenticado
+        """
+        user = request.user
         serializer = UserSerializer(user)
-
         return Response(serializer.data)
-
 
     def put(self, request):
+        """
+        Actualizar datos del perfil
+        """
+        user = request.user
+        serializer = UpdateUserSerializer(user, data=request.data)
 
-        user = UserService.get_user_profile(request.user.id)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
 
-        updated_user = UserService.update_user_profile(user, request.data)
-
-        serializer = UserSerializer(updated_user)
-
-        return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class LogoutView(APIView):
 
@@ -111,3 +112,4 @@ class SearchUserView(APIView):
         serializer = UserSerializer(users, many=True)
 
         return Response(serializer.data)
+

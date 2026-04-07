@@ -3,7 +3,8 @@ from .views import (
     RegisterView,
     UserMeView,
     SearchUserView,
-    LogoutView
+    LogoutView,
+    UserProfileView,
 )
 
 from rest_framework_simplejwt.views import (
@@ -12,13 +13,18 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
-    # AUTH
-    path('auth/register/', RegisterView.as_view()),
-    path('auth/login/', TokenObtainPairView.as_view()),
-    path('auth/token/refresh/', TokenRefreshView.as_view()),
-    path('auth/logout/', LogoutView.as_view()),
 
-    # USERS - Quita el 'users/' adicional
-    path('me/', UserMeView.as_view()),  # ← Cambiado de 'users/me/' a 'me/'
-    path('search/', SearchUserView.as_view()),  # ← Cambiado de 'users/search/' a 'search/'
+    # AUTH
+    path("auth/register/", RegisterView.as_view(), name="auth-register"),
+    path("auth/login/", TokenObtainPairView.as_view(), name="auth-login"),
+    path("auth/token/refresh/", TokenRefreshView.as_view(), name="auth-refresh"),
+    path("auth/logout/", LogoutView.as_view(), name="auth-logout"),
+
+    # PROFILE (usuario autenticado)
+    path("profile/get/", UserProfileView.as_view(), name="user-profile-get"),
+    path("profile/update/", UserProfileView.as_view(), name="user-profile-update"),
+
+    # USERS
+    path("users/me/", UserMeView.as_view(), name="user-me"),
+    path("users/search/", SearchUserView.as_view(), name="user-search"),
 ]
