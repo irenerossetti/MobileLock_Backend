@@ -16,10 +16,6 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Agregar 'apps' al path de Python
-import sys
-sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
-
 # ==================== VARIABLES DE ENTORNO ====================
 # Seguridad: NUNCA hardcodees secretos en producción
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-m-5sz%%2@rpj!f0tyyr!+x%=)-vz+ex9#6o9!0#hccpji66!3h')
@@ -45,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'apps.users',
+    'apps.devices',
 ]
 
 # ==================== MIDDLEWARE ====================
