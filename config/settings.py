@@ -16,10 +16,6 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Agregar 'apps' al path de Python
-import sys
-sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
-
 # ==================== VARIABLES DE ENTORNO ====================
 # Seguridad: NUNCA hardcodees secretos en producción
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-m-5sz%%2@rpj!f0tyyr!+x%=)-vz+ex9#6o9!0#hccpji66!3h')
@@ -46,6 +42,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'apps.users',
     'apps.saas',
+    'apps.devices',
 ]
 
 # ==================== MIDDLEWARE ====================
@@ -123,7 +120,7 @@ LIMITE_GAS_WEI = int(os.environ.get('LIMITE_GAS_WEI', '3000000000000000'))
 
 # ==================== CORS ====================
 # Configuración CORS dinámica
-cors_allowed_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
+cors_allowed_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173')
 
 if cors_allowed_origins_env == '*':
     CORS_ALLOW_ALL_ORIGINS = True

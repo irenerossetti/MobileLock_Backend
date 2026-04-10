@@ -29,7 +29,6 @@ class Usuario(AbstractUser):
     )
 
     plan_expiracion = models.DateTimeField(null=True, blank=True)
-
     plan_estado = models.CharField(
         max_length=20,
         choices=PlanEstado.choices,
@@ -39,6 +38,7 @@ class Usuario(AbstractUser):
     dispositivos_registrados_actual = models.IntegerField(default=0)
 
     USERNAME_FIELD = "correo_electronico"
+    EMAIL_FIELD = "correo_electronico"
     REQUIRED_FIELDS = ["username"]
 
     def __str__(self):
