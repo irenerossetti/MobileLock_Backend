@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'apps.users',
+    'apps.saas',
 ]
 
 # ==================== MIDDLEWARE ====================
@@ -56,6 +57,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.users.middleware.VerificacionDispositivoLimitMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -115,6 +117,9 @@ SIMPLE_JWT = {
     # Opcional: Usar una clave diferente para JWT si la defines
     'SIGNING_KEY': JWT_SECRET_KEY,
 }
+
+# ==================== BLOCKCHAIN / GAS ====================
+LIMITE_GAS_WEI = int(os.environ.get('LIMITE_GAS_WEI', '3000000000000000'))
 
 # ==================== CORS ====================
 # Configuración CORS dinámica
