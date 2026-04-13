@@ -59,7 +59,10 @@ class BillingDashboardSerializer(serializers.Serializer):
 
 
 class PlanPrecioFriendlySerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
     nombre_plan = serializers.CharField(source="nombre")
+    precio_mensual = serializers.DecimalField(max_digits=10, decimal_places=2, source="precio")
+    max_dispositivos = serializers.IntegerField()
     precio_mensual_formateado = serializers.SerializerMethodField()
     precio_anual_formateado = serializers.SerializerMethodField()
     caracteristicas = serializers.SerializerMethodField()
@@ -69,7 +72,10 @@ class PlanPrecioFriendlySerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPlan
         fields = [
+            "id",
             "nombre_plan",
+            "precio_mensual",
+            "max_dispositivos",
             "precio_mensual_formateado",
             "precio_anual_formateado",
             "caracteristicas",

@@ -3,6 +3,8 @@ from apps.users.models import Usuario
 
 
 class UserSerializer(serializers.ModelSerializer):
+    plan_nombre = serializers.SerializerMethodField()
+    max_dispositivos_permitidos = serializers.SerializerMethodField()
 
     class Meta:
         model = Usuario
@@ -15,8 +17,24 @@ class UserSerializer(serializers.ModelSerializer):
             "puntaje_reputacion",
             "plan_suscripcion",
             "plan_estado",
+            "plan_nombre",
+            "max_dispositivos_permitidos",
             "dispositivos_registrados_actual"
         ]
+
+    def get_plan_nombre(self, obj):
+        profile = getattr(obj, "profile", None)
+        if profile and profile.plan_actual:
+            return profile.plan_actual.nombre
+
+        return obj.plan_suscripcion
+
+    def get_max_dispositivos_permitidos(self, obj):
+        profile = getattr(obj, "profile", None)
+        if profile and profile.plan_actual and profile.plan_actual.max_dispositivos:
+            return profile.plan_actual.max_dispositivos
+
+        return 5 if obj.plan_suscripcion == Usuario.PlanSuscripcion.PREMIUM else 1
 
 
 class RegisterSerializer(serializers.ModelSerializer):

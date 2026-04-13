@@ -1,5 +1,6 @@
 from apps.devices.models import Dispositivo
 from django.db import transaction
+from apps.users.models import Usuario
 
 
 class DeviceService:
@@ -11,6 +12,13 @@ class DeviceService:
     @staticmethod
     @transaction.atomic
     def create_device(user, data):
+        current_count = Dispositivo.objects.filter(id_usuario_propietario=user).count()
+        max_devices = DeviceService._get_max_devices_for_user(user)
+
+        if current_count >= max_devices:
+            raise ValueError(
+                f"Tu plan permite hasta {max_devices} dispositivo(s)."
+            )
 
         device = Dispositivo.objects.create(
             id_usuario_propietario=user,
@@ -38,3 +46,15 @@ class DeviceService:
     @staticmethod
     def delete_device(device):
         device.delete()
+
+    @staticmethod
+    def _get_max_devices_for_user(user):
+        profile = getattr(user, "profile", None)
+
+        if profile and profile.plan_actual and profile.plan_actual.max_dispositivos:
+            return profile.plan_actual.max_dispositivos
+
+        if user.plan_suscripcion == Usuario.PlanSuscripcion.PREMIUM:
+            return 5
+
+        return 1

@@ -27,10 +27,16 @@ class DeviceListCreateView(APIView):
 
         if serializer.is_valid():
 
-            device = DeviceService.create_device(
-                request.user,
-                serializer.validated_data
-            )
+            try:
+                device = DeviceService.create_device(
+                    request.user,
+                    serializer.validated_data
+                )
+            except ValueError as exc:
+                return Response(
+                    {"detail": str(exc)},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
             return Response(
                 DispositivoSerializer(device).data,

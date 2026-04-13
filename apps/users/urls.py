@@ -5,6 +5,7 @@ from .views import (
     SearchUserView,
     LogoutView,
     UserProfileView,
+    UpgradePlanView,
 )
 
 from rest_framework_simplejwt.views import (
@@ -23,6 +24,7 @@ urlpatterns = [
     # PROFILE (usuario autenticado)
     path("profile/get/", UserProfileView.as_view(), name="user-profile-get"),
     path("profile/update/", UserProfileView.as_view(), name="user-profile-update"),
+    path("plan/upgrade/", UpgradePlanView.as_view(), name="user-plan-upgrade"),
 
     # USERS
     path("users/me/", UserMeView.as_view(), name="user-me"),

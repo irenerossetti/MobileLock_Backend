@@ -3,10 +3,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.db import transaction
 
-from apps.users.models import Usuario
 from .serializers import RegisterSerializer, UserSerializer, UpdateUserSerializer
-from .services import UserService
+from .services import UserPlanService, UserService
 
 
 class UserProfileView(APIView):
@@ -17,7 +17,7 @@ class UserProfileView(APIView):
         """
         Obtener perfil del usuario autenticado
         """
-        user = request.user
+        user = UserPlanService.sync_plan_flags(request.user)
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
@@ -61,10 +61,55 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Usuario creado correctamente"}, status=status.HTTP_201_CREATED)
+            with transaction.atomic():
+                user = serializer.save()
+                plan_id = request.data.get("plan_id")
+
+                if plan_id and not UserPlanService.assign_plan(user, plan_id):
+                    return Response(
+                        {"detail": "Plan seleccionado inválido."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            return Response(
+                {
+                    "message": "Usuario creado correctamente",
+                    "plan_suscripcion": user.plan_suscripcion,
+                },
+                status=status.HTTP_201_CREATED,
+            )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpgradePlanView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        plan_id = request.data.get("plan_id")
+
+        if not plan_id:
+            return Response(
+                {"detail": "plan_id es requerido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        actualizado = UserPlanService.assign_plan(request.user, plan_id)
+
+        if not actualizado:
+            return Response(
+                {"detail": "No se pudo asignar el plan seleccionado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(
+            {
+                "message": "Plan actualizado correctamente.",
+                "plan_suscripcion": request.user.plan_suscripcion,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class UserMeView(APIView):
@@ -73,7 +118,9 @@ class UserMeView(APIView):
 
     def get(self, request):
 
-        user = UserService.get_user_profile(request.user.id)
+        user = UserPlanService.sync_plan_flags(
+            UserService.get_user_profile(request.user.id)
+        )
 
         serializer = UserSerializer(user)
 
