@@ -122,7 +122,10 @@ LIMITE_GAS_WEI = int(os.environ.get('LIMITE_GAS_WEI', '3000000000000000'))
 # Configuración CORS dinámica (puerto 5173 para Vite dev, 3000 para prod)
 cors_allowed_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000')
 
-if cors_allowed_origins_env == '*':
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOWED_ORIGINS = []
+elif cors_allowed_origins_env == '*':
     CORS_ALLOW_ALL_ORIGINS = True
     CORS_ALLOWED_ORIGINS = []
 else:

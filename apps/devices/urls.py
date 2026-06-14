@@ -1,5 +1,10 @@
 from django.urls import path
-from apps.devices.views import DeviceListCreateView, DeviceDetailView
+from apps.devices.views import (
+    DeviceListCreateView,
+    DeviceDetailView,
+    DeviceVerificationView,
+    HistorialEscaneoListView,
+)
 
 urlpatterns = [
 
@@ -8,6 +13,12 @@ urlpatterns = [
 
     # Registrar dispositivo
     path("create/", DeviceListCreateView.as_view(), name="device-create"),
+
+    # Verificar estado legal de dispositivo
+    path("verify/", DeviceVerificationView.as_view(), name="device-verify"),
+
+    # Ver historial de escaneos
+    path("scan-history/", HistorialEscaneoListView.as_view(), name="scan-history"),
 
     # Obtener un dispositivo específico
     path("detail/<int:pk>/", DeviceDetailView.as_view(), name="device-detail"),
