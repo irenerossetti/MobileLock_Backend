@@ -12,7 +12,7 @@ class Dispositivo(models.Model):
 
     marca_modelo = models.CharField(max_length=255)
 
-    url_imagen_referencia = models.TextField(blank=True, null=True)
+    url_imagen_referencia = models.ImageField(upload_to='devices/', blank=True, null=True)
 
     fecha_registro_blockchain = models.DateTimeField(null=True, blank=True)
 

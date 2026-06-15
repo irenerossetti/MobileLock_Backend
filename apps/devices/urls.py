@@ -4,6 +4,7 @@ from apps.devices.views import (
     DeviceDetailView,
     DeviceVerificationView,
     HistorialEscaneoListView,
+    DeviceTransferView,
 )
 
 urlpatterns = [
@@ -28,4 +29,7 @@ urlpatterns = [
 
     # Eliminar dispositivo
     path("delete/<int:pk>/", DeviceDetailView.as_view(), name="device-delete"),
+
+    # Transferir dispositivo
+    path("transfer/<int:pk>/", DeviceTransferView.as_view(), name="device-transfer"),
 ]

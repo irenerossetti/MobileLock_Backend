@@ -176,3 +176,49 @@ class HistorialEscaneoListView(APIView):
         historial = HistorialEscaneo.objects.filter(usuario=request.user)
         serializer = HistorialEscaneoSerializer(historial, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DeviceTransferView(APIView):
+    permission_classes = [IsAuthenticated, IsDeviceOwner]
+
+    def post(self, request, pk):
+        device = get_object_or_404(Dispositivo, id_dispositivo=pk)
+        self.check_object_permissions(request, device)
+
+        if device.estado != "LIBRE":
+            return Response(
+                {"detail": "No puedes transferir un dispositivo reportado como ROBADO."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        nuevo_propietario_email = request.data.get("nuevo_propietario_email")
+        if not nuevo_propietario_email:
+            return Response(
+                {"detail": "Debes proporcionar el correo electrónico del nuevo propietario."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        from apps.users.models import Usuario
+        nuevo_propietario = Usuario.objects.filter(correo_electronico=nuevo_propietario_email).first()
+        if not nuevo_propietario:
+            return Response(
+                {"detail": "El usuario destino no existe en el sistema."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if nuevo_propietario == request.user:
+            return Response(
+                {"detail": "No puedes transferir el dispositivo a ti mismo."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update ownership
+        device.id_usuario_propietario = nuevo_propietario
+        device.save()
+
+        # Opcional: Registrar la transferencia en un historial si es necesario
+
+        return Response(
+            {"detail": f"Dispositivo transferido exitosamente a {nuevo_propietario_email}."},
+            status=status.HTTP_200_OK
+        )
