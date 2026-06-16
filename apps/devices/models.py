@@ -24,8 +24,21 @@ class Dispositivo(models.Model):
 
     estado = models.CharField(
         max_length=20,
-        choices=[("LIBRE", "LIBRE"), ("ROBADO", "ROBADO")],
+        choices=[("LIBRE", "LIBRE"), ("ROBADO", "ROBADO"), ("EXTRAVIADO", "EXTRAVIADO")],
         default="LIBRE"
+    )
+
+    hash_visual = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Identificador hash visual único basado en características"
+    )
+
+    vector_caracteristicas = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Representación JSON del vector de 1280 floats extraído por EfficientNet"
     )
 
     fecha_creacion = models.DateTimeField(auto_now_add=True)
@@ -48,7 +61,7 @@ class HistorialEscaneo(models.Model):
     valor_consultado = models.CharField(max_length=255)
     resultado_estado = models.CharField(
         max_length=20,
-        choices=[("LIBRE", "LIBRE"), ("ROBADO", "ROBADO"), ("NO_REGISTRADO", "NO_REGISTRADO")]
+        choices=[("LIBRE", "LIBRE"), ("ROBADO", "ROBADO"), ("EXTRAVIADO", "EXTRAVIADO"), ("NO_REGISTRADO", "NO_REGISTRADO")]
     )
     marca_modelo_detectado = models.CharField(max_length=255, null=True, blank=True)
     fecha_consulta = models.DateTimeField(auto_now_add=True)

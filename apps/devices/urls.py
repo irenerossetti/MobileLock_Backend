@@ -5,6 +5,7 @@ from apps.devices.views import (
     DeviceVerificationView,
     HistorialEscaneoListView,
     DeviceTransferView,
+    DeviceReportStateView,
 )
 
 urlpatterns = [
@@ -32,4 +33,7 @@ urlpatterns = [
 
     # Transferir dispositivo
     path("transfer/<int:pk>/", DeviceTransferView.as_view(), name="device-transfer"),
+
+    # Reportar estado de dispositivo (LIBRE/ROBADO/EXTRAVIADO)
+    path("report-state/<int:pk>/", DeviceReportStateView.as_view(), name="device-report-state"),
 ]

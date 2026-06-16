@@ -24,7 +24,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-m-5sz%%2@rpj!f0tyyr!+
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 # ALLOWED_HOSTS: puede venir como string separado por comas
-allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,192.168.0.7,192.168.0.3') #colocar la ip de su red cuando trabaje con celular
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',')]
 
 # ==================== APLICACIONES ====================
@@ -79,20 +79,37 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ==================== BASE DE DATOS ====================
-# Configuración dinámica desde variables de entorno
-DATABASES = {
-    'default': {
-        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.environ.get('DB_NAME', 'neondb'),
-        'USER': os.environ.get('DB_USER', 'neondb_owner'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'npg_2cBj0zkfGtLa'),
-        'HOST': os.environ.get('DB_HOST', 'ep-purple-wind-am7m89ba-pooler.c-5.us-east-1.aws.neon.tech'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
+# Configuración dinámica desde variables de entorno. Usa SQLite en local para pruebas.
+import sys
+
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+    class DisableMigrations:
+        def __contains__(self, item):
+            return True
+        def __getitem__(self, item):
+            return None
+
+    MIGRATION_MODULES = DisableMigrations()
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.environ.get('DB_NAME', 'neondb'),
+            'USER': os.environ.get('DB_USER', 'neondb_owner'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'npg_2cBj0zkfGtLa'),
+            'HOST': os.environ.get('DB_HOST', 'ep-purple-wind-am7m89ba-pooler.c-5.us-east-1.aws.neon.tech'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+            'OPTIONS': {
+                'sslmode': 'require',
+            },
+        }
+    }
 
 # ==================== AUTENTICACIÓN JWT ====================
 # Usar JWT_SECRET_KEY de entorno o fallback
@@ -120,7 +137,7 @@ LIMITE_GAS_WEI = int(os.environ.get('LIMITE_GAS_WEI', '3000000000000000'))
 
 # ==================== CORS ====================
 # Configuración CORS dinámica (puerto 5173 para Vite dev, 3000 para prod)
-cors_allowed_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000')
+cors_allowed_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', '*')
 
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True

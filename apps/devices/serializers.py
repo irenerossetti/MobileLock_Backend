@@ -15,11 +15,15 @@ class DispositivoSerializer(serializers.ModelSerializer):
             "fecha_registro_blockchain",
             "id_usuario_propietario",
             "estado",
+            "hash_visual",
+            "vector_caracteristicas",
             "fecha_creacion"
         ]
         read_only_fields = [
             "id_dispositivo",
             "id_usuario_propietario",
+            "hash_visual",
+            "vector_caracteristicas",
             "fecha_creacion"
         ]
 
