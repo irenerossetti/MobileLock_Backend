@@ -24,7 +24,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-m-5sz%%2@rpj!f0tyyr!+
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 # ALLOWED_HOSTS: puede venir como string separado por comas
-allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,192.168.0.7,192.168.0.3') #colocar la ip de su red cuando trabaje con celular
+allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,192.168.0.7,192.168.0.3,192.168.0.16') #colocar la ip de su red cuando trabaje con celular
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',')]
 
 # ==================== APLICACIONES ====================

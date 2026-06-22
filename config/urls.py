@@ -20,6 +20,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from apps.devices.views import DeviceReportStolenView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -29,6 +30,10 @@ urlpatterns = [
     path('api/users/', include('apps.users.urls')),
     path('api/', include('apps.saas.urls')),
     path('api/devices/', include('apps.devices.urls')),
+    
+    # Endpoint literal V1 solicitado por la especificación de la tarea
+    path('api/v1/devices/report-stolen/', DeviceReportStolenView.as_view(), name='report-stolen-v1-root'),
+    
     # JWT token endpoints
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

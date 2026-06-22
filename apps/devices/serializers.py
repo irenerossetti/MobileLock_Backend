@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.devices.models import Dispositivo, HistorialEscaneo
+from apps.devices.models import Dispositivo, HistorialEscaneo, HistorialTrazabilidad
 
 
 class DispositivoSerializer(serializers.ModelSerializer):
@@ -50,3 +50,16 @@ class HistorialEscaneoSerializer(serializers.ModelSerializer):
         if len(val) <= 6:
             return val
         return f"{val[:4]}{'*' * (len(val) - 5)}{val[-1:]}"
+
+
+class HistorialTrazabilidadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HistorialTrazabilidad
+        fields = [
+            "id_trazabilidad",
+            "id_celular",
+            "estado_anterior",
+            "estado_nuevo",
+            "fecha_cambio",
+            "motivo"
+        ]

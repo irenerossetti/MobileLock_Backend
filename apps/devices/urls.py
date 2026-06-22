@@ -6,6 +6,7 @@ from apps.devices.views import (
     HistorialEscaneoListView,
     DeviceTransferView,
     DeviceReportStateView,
+    DeviceReportStolenView,
 )
 
 urlpatterns = [
@@ -36,4 +37,7 @@ urlpatterns = [
 
     # Reportar estado de dispositivo (LIBRE/ROBADO/EXTRAVIADO)
     path("report-state/<int:pk>/", DeviceReportStateView.as_view(), name="device-report-state"),
+
+    # Reportar dispositivo como robado (V1)
+    path("v1/report-stolen/", DeviceReportStolenView.as_view(), name="device-report-stolen-v1"),
 ]

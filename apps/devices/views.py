@@ -4,8 +4,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from apps.devices.models import Dispositivo, HistorialEscaneo
-from apps.devices.serializers import DispositivoSerializer, HistorialEscaneoSerializer
+from apps.devices.models import Dispositivo, HistorialEscaneo, HistorialTrazabilidad
+from apps.devices.serializers import (
+    DispositivoSerializer,
+    HistorialEscaneoSerializer,
+    HistorialTrazabilidadSerializer,
+)
 from apps.devices.permissions import IsDeviceOwner
 from apps.devices.services import DeviceService
 from apps.users.models import puede_realizar_accion, Profile
@@ -379,3 +383,73 @@ class DeviceReportStateView(APIView):
             )
 
         return Response(DispositivoSerializer(device).data, status=status.HTTP_200_OK)
+
+
+class DeviceReportStolenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        device_id = request.data.get("device_id")
+        imei = request.data.get("imei")
+        motivo = request.data.get("motivo", "Reportado como robado/extraviado")
+
+        if not device_id and not imei:
+            return Response(
+                {"detail": "Debes proporcionar 'device_id' o 'imei' para reportar el robo."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        device = None
+        if device_id:
+            device = Dispositivo.objects.filter(id_dispositivo=device_id, id_usuario_propietario=request.user).first()
+        elif imei:
+            device = Dispositivo.objects.filter(hash_imei=imei, id_usuario_propietario=request.user).first()
+            if not device:
+                imei_hash = hashlib.sha256(imei.encode("utf-8")).hexdigest()
+                device = Dispositivo.objects.filter(hash_imei=imei_hash, id_usuario_propietario=request.user).first()
+
+        if not device:
+            return Response(
+                {"detail": "Dispositivo no encontrado o no pertenece al usuario autenticado."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if device.estado != "LIBRE":
+            return Response(
+                {"detail": f"El dispositivo ya se encuentra en estado {device.estado}."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        estado_previo = device.estado
+
+        # Cambiar estado usando el servicio de dispositivo
+        try:
+            device = DeviceService.report_device_state(device, "ROBADO")
+        except ValueError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Registrar la trazabilidad del cambio
+        trazabilidad = HistorialTrazabilidad.objects.create(
+            id_celular=device,
+            estado_anterior=estado_previo,
+            estado_nuevo="ROBADO",
+            motivo=motivo
+        )
+
+        # Registrar en logs de auditoría de SaaS
+        UsageLog.objects.create(
+            usuario=request.user,
+            tipo_accion="reporte_robo_creado",
+            dispositivo_id=str(device.id_dispositivo)
+        )
+
+        payload = {
+            "mensaje": "Dispositivo reportado como robado exitosamente.",
+            "dispositivo": DispositivoSerializer(device).data,
+            "trazabilidad": HistorialTrazabilidadSerializer(trazabilidad).data
+        }
+
+        return Response(payload, status=status.HTTP_200_OK)

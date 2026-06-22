@@ -71,3 +71,23 @@ class HistorialEscaneo(models.Model):
 
     def __str__(self):
         return f"{self.usuario.correo_electronico} - {self.tipo_filtro} - {self.resultado_estado}"
+
+
+class HistorialTrazabilidad(models.Model):
+    id_trazabilidad = models.AutoField(primary_key=True)
+    id_celular = models.ForeignKey(
+        Dispositivo,
+        on_delete=models.CASCADE,
+        related_name="trazabilidad"
+    )
+    estado_anterior = models.CharField(max_length=20)
+    estado_nuevo = models.CharField(max_length=20)
+    fecha_cambio = models.DateTimeField(auto_now_add=True)
+    motivo = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = "historial_trazabilidad"
+        ordering = ["-fecha_cambio"]
+
+    def __str__(self):
+        return f"#{self.id_celular.id_dispositivo} ({self.estado_anterior} -> {self.estado_nuevo}) en {self.fecha_cambio}"
