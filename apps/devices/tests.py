@@ -33,17 +33,16 @@ class DeviceAITestCase(APITestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
-    @patch("apps.devices.ai_service.AIService._get_model")
-    def test_ai_service_preprocessing_and_extraction(self, mock_get_model):
-        import torch
-        # Simular el modelo de PyTorch para evitar llamadas a red o uso excesivo de memoria
-        mock_model = MagicMock()
-        mock_model.return_value = torch.ones(1, 1280) * 0.5
-        mock_get_model.return_value = (mock_model, torch.device("cpu"))
-
-        # Validar preprocesamiento
-        preprocessed = AIService.preprocesar_imagen(self.img_path)
-        self.assertEqual(preprocessed.shape, (1, 3, 224, 224))
+    @patch("requests.post")
+    def test_ai_service_preprocessing_and_extraction(self, mock_post):
+        # Simular respuesta del microservicio de IA
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "vector": [0.5] * 1280,
+            "visual_hash": "a" * 64
+        }
+        mock_post.return_value = mock_response
 
         # Validar extracción de vector
         vector = AIService.extraer_vector_caracteristicas(self.img_path)
@@ -54,12 +53,16 @@ class DeviceAITestCase(APITestCase):
         hash_val = AIService.generar_hash_visual(vector)
         self.assertEqual(len(hash_val), 64)
 
-    @patch("apps.devices.ai_service.AIService._get_model")
-    def test_create_device_with_image_triggers_ai(self, mock_get_model):
-        import torch
-        mock_model = MagicMock()
-        mock_model.return_value = torch.ones(1, 1280) * 0.42
-        mock_get_model.return_value = (mock_model, torch.device("cpu"))
+    @patch("requests.post")
+    def test_create_device_with_image_triggers_ai(self, mock_post):
+        # Simular respuesta del microservicio de IA
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "vector": [0.42] * 1280,
+            "visual_hash": "b" * 64
+        }
+        mock_post.return_value = mock_response
 
         # Preparar archivo de carga simulado
         with open(self.img_path, "rb") as f:
@@ -85,7 +88,7 @@ class DeviceAITestCase(APITestCase):
         
         vector = json.loads(device.vector_caracteristicas)
         self.assertEqual(len(vector), 1280)
-        self.assertAlmostEqual(vector[0], 0.42)
+        self.assertEqual(vector[0], 0.42)
 
         # Eliminar archivo físico creado en la carpeta media por la prueba
         if device.url_imagen_referencia:

@@ -292,11 +292,12 @@ class DeviceVerificationView(APIView):
         payload = {
             "autentico": autentico,
             "similitud": similarity,
+            "score_coincidencia": round(similarity * 100, 2),
             "umbral": 0.70,
             "mensaje": (
                 f"El dispositivo físico coincide con el registro original (Similitud: {similarity * 100:.1f}%)."
                 if autentico else
-                f"Alerta de Autenticidad: El dispositivo físico NO coincide con el registro original (Similitud: {similarity * 100:.1f}%)."
+                f"Alerta de Autenticidad: El dispositivo físico NO coincide con el registro original (Similitul: {similarity * 100:.1f}%)."
             ),
             "url_imagen_referencia": request.build_absolute_uri(device.url_imagen_referencia.url) if device.url_imagen_referencia else None,
             "dispositivo": DispositivoSerializer(device).data

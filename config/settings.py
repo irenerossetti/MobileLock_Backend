@@ -135,6 +135,9 @@ SIMPLE_JWT = {
 # ==================== BLOCKCHAIN / GAS ====================
 LIMITE_GAS_WEI = int(os.environ.get('LIMITE_GAS_WEI', '3000000000000000'))
 
+# ==================== MICROSERVICIO DE IA ====================
+AI_MICROSERVICE_URL = os.environ.get('AI_MICROSERVICE_URL', 'http://localhost:8002')
+
 # ==================== CORS ====================
 # Configuración CORS dinámica (puerto 5173 para Vite dev, 3000 para prod)
 cors_allowed_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', '*')

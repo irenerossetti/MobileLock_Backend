@@ -162,19 +162,43 @@ Verifica que tu URL de Render esté en `ALLOWED_HOSTS`.
 | `DB_HOST` | `ep-xxx.aws.neon.tech` | Host BD |
 | `DB_PORT` | `5432` | Puerto BD |
 | `CORS_ALLOWED_ORIGINS` | `https://app.onrender.com` | Orígenes CORS permitidos |
+| `AI_MICROSERVICE_URL` | `http://localhost:8002` | URL del microservicio de IA |
+| `BLOCKCHAIN_CONTRACT_ADDRESS` | `0x123...` | Dirección del contrato inteligente en Polygon Amoy |
+| `BLOCKCHAIN_PRIVATE_KEY` | `0xabc...` | Llave privada del servidor-wallet para firmar transacciones |
+| `BLOCKCHAIN_RPC_URL` | `https://rpc-amoy.polygon.technology` | Nodo RPC de Polygon Amoy |
 
 ---
 
-## Próximos Pasos
+## Despliegue del Microservicio de IA (MobileLock_AI)
 
-1. ✅ Genera un `SECRET_KEY` seguro
-2. ✅ Configura variables en Render
-3. ✅ Deploy en Render.com
-4. ✅ Prueba tu API
+El procesamiento pesado de imágenes (EfficientNet-B0) se ha separado en un microservicio de **FastAPI**.
 
-```bash
-# Para generar SECRET_KEY:
-python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
-```
+### Ejecución Local
+1. Ve a la carpeta del microservicio:
+   ```bash
+   cd MobileLock_AI
+   ```
+2. Instala los requerimientos utilizando el entorno virtual:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Levanta el microservicio usando Uvicorn:
+   ```bash
+   uvicorn main:app --host 0.0.0.0 --port 8002
+   ```
+4. Puedes acceder a la documentación interactiva en: `http://localhost:8002/docs`
 
-¡Listo! Tu proyecto está configurado para producción en Render ✨
+---
+
+## Despliegue del Smart Contract (MobileLock.sol)
+
+El contrato inteligente se encuentra en `blockchain/contracts/MobileLock.sol`.
+
+1. Abre [Remix IDE](https://remix.ethereum.org/).
+2. Copia el código de `MobileLock.sol` y compílalo usando la versión del compilador `0.8.20`.
+3. Selecciona el entorno **Injected Provider - MetaMask** en la pestaña de despliegue.
+4. Despliégalo en la red **Polygon Amoy Testnet** (asegúrate de tener POL de prueba de un grifo/faucet).
+5. Copia la dirección del contrato generado y agrégala al archivo `.env` del backend bajo `BLOCKCHAIN_CONTRACT_ADDRESS`.
+
+¡Listo! Tu proyecto está configurado con IA y Blockchain en producción ✨
+
