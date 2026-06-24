@@ -160,3 +160,18 @@ class SearchUserView(APIView):
 
         return Response(serializer.data)
 
+
+class VerifyPasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        password = request.data.get("password")
+        if not password:
+            return Response({"detail": "La contraseña es requerida."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if user.check_password(password):
+            return Response({"message": "Contraseña válida."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"detail": "Contraseña incorrecta."}, status=status.HTTP_403_FORBIDDEN)
+

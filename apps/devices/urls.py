@@ -7,6 +7,12 @@ from apps.devices.views import (
     DeviceTransferView,
     DeviceReportStateView,
     DeviceReportStolenView,
+    HistorialTrazabilidadListView,
+    PublicDeviceVerificationView,
+    InitiateTransferView,
+    PendingTransfersView,
+    AcceptTransferView,
+    RejectTransferView,
 )
 
 urlpatterns = [
@@ -40,4 +46,16 @@ urlpatterns = [
 
     # Reportar dispositivo como robado (V1)
     path("v1/report-stolen/", DeviceReportStolenView.as_view(), name="device-report-stolen-v1"),
+
+    # Ver historial de trazabilidad
+    path("traceability/<int:pk>/", HistorialTrazabilidadListView.as_view(), name="device-traceability"),
+
+    # Verificación pública
+    path("public-verify/", PublicDeviceVerificationView.as_view(), name="device-public-verify"),
+
+    # Transferencias de propiedad
+    path("transfer/initiate/<int:pk>/", InitiateTransferView.as_view(), name="device-transfer-initiate"),
+    path("transfer/pending/", PendingTransfersView.as_view(), name="device-transfer-pending"),
+    path("transfer/accept/<int:pk>/", AcceptTransferView.as_view(), name="device-transfer-accept"),
+    path("transfer/reject/<int:pk>/", RejectTransferView.as_view(), name="device-transfer-reject"),
 ]

@@ -14,6 +14,7 @@ from apps.devices.permissions import IsDeviceOwner
 from apps.devices.services import DeviceService
 from apps.users.models import puede_realizar_accion, Profile
 from apps.saas.models import UsageLog
+from rest_framework.permissions import AllowAny
 
 
 class DeviceListCreateView(APIView):
@@ -375,6 +376,7 @@ class DeviceReportStateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        estado_anterior = device.estado
         try:
             device = DeviceService.report_device_state(device, nuevo_estado)
         except ValueError as exc:
@@ -382,6 +384,13 @@ class DeviceReportStateView(APIView):
                 {"detail": str(exc)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        HistorialTrazabilidad.objects.create(
+            id_celular=device,
+            estado_anterior=estado_anterior,
+            estado_nuevo=nuevo_estado,
+            motivo=request.data.get("motivo", f"Cambio manual de estado a {nuevo_estado}")
+        )
 
         return Response(DispositivoSerializer(device).data, status=status.HTTP_200_OK)
 
@@ -454,3 +463,129 @@ class DeviceReportStolenView(APIView):
         }
 
         return Response(payload, status=status.HTTP_200_OK)
+
+
+class HistorialTrazabilidadListView(APIView):
+    permission_classes = [IsAuthenticated, IsDeviceOwner]
+
+    def get(self, request, pk):
+        device = get_object_or_404(Dispositivo, id_dispositivo=pk)
+        self.check_object_permissions(request, device)
+
+        historial = HistorialTrazabilidad.objects.filter(id_celular=device).order_by('-fecha_cambio')
+        serializer = HistorialTrazabilidadSerializer(historial, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class PublicDeviceVerificationView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        imei = request.query_params.get("imei")
+        if not imei:
+            return Response({"detail": "Debes enviar el imei para la verificación."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Buscar dispositivo por IMEI
+        device = Dispositivo.objects.filter(hash_imei=imei).first()
+        if not device:
+            # Buscar hasheado
+            imei_hash = hashlib.sha256(imei.encode("utf-8")).hexdigest()
+            device = Dispositivo.objects.filter(hash_imei=imei_hash).first()
+
+        if device:
+            return Response({
+                "estado": device.estado,
+                "marca_modelo": device.marca_modelo,
+                "mensaje": f"El dispositivo se encuentra {device.estado}."
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                "estado": "NO_REGISTRADO",
+                "mensaje": "El dispositivo no está registrado en el Smart Contract."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+from apps.devices.models import SolicitudTransferencia
+from apps.devices.serializers import SolicitudTransferenciaSerializer
+from apps.users.models import Usuario
+
+class InitiateTransferView(APIView):
+    permission_classes = [IsAuthenticated, IsDeviceOwner]
+
+    def post(self, request, pk):
+        device = get_object_or_404(Dispositivo, pk=pk)
+        self.check_object_permissions(request, device)
+
+        email_destino = request.data.get("email_destino")
+        if not email_destino:
+            return Response({"detail": "El correo del destinatario es obligatorio."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            usuario_destino = Usuario.objects.get(correo_electronico=email_destino)
+        except Usuario.DoesNotExist:
+            return Response({"detail": "No se encontró un usuario con ese correo."}, status=status.HTTP_404_NOT_FOUND)
+
+        if usuario_destino == request.user:
+            return Response({"detail": "No puedes transferir el dispositivo a ti mismo."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Crear solicitud pendiente
+        solicitud = SolicitudTransferencia.objects.create(
+            dispositivo=device,
+            usuario_origen=request.user,
+            usuario_destino=usuario_destino,
+            estado="PENDIENTE"
+        )
+        return Response({"message": "Solicitud de transferencia enviada."}, status=status.HTTP_201_CREATED)
+
+class PendingTransfersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        solicitudes = SolicitudTransferencia.objects.filter(
+            usuario_destino=request.user,
+            estado="PENDIENTE"
+        )
+        serializer = SolicitudTransferenciaSerializer(solicitudes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class AcceptTransferView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        from django.utils import timezone
+        
+        solicitud = get_object_or_404(SolicitudTransferencia, pk=pk, usuario_destino=request.user, estado="PENDIENTE")
+        
+        dispositivo = solicitud.dispositivo
+        
+        # Guardar en historial trazabilidad
+        HistorialTrazabilidad.objects.create(
+            id_celular=dispositivo,
+            estado_anterior=dispositivo.estado,
+            estado_nuevo=dispositivo.estado,
+            motivo=f"Transferencia de propiedad de {solicitud.usuario_origen.correo_electronico} a {solicitud.usuario_destino.correo_electronico}"
+        )
+        
+        # Actualizar propietario
+        dispositivo.id_usuario_propietario = request.user
+        dispositivo.save(update_fields=["id_usuario_propietario"])
+        
+        # Marcar como aceptada
+        solicitud.estado = "ACEPTADA"
+        solicitud.fecha_resolucion = timezone.now()
+        solicitud.save(update_fields=["estado", "fecha_resolucion"])
+        
+        return Response({"message": "Transferencia aceptada con éxito."}, status=status.HTTP_200_OK)
+
+class RejectTransferView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        from django.utils import timezone
+        solicitud = get_object_or_404(SolicitudTransferencia, pk=pk, usuario_destino=request.user, estado="PENDIENTE")
+        
+        solicitud.estado = "RECHAZADA"
+        solicitud.fecha_resolucion = timezone.now()
+        solicitud.save(update_fields=["estado", "fecha_resolucion"])
+        
+        return Response({"message": "Transferencia rechazada."}, status=status.HTTP_200_OK)

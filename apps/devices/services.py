@@ -50,6 +50,21 @@ class DeviceService:
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error procesando huella visual de IA para el dispositivo {device.id_dispositivo}: {str(e)}", exc_info=True)
 
+        # Registro en Blockchain
+        try:
+            from apps.devices.blockchain_service import BlockchainService
+            from django.utils import timezone
+            bs = BlockchainService()
+            tx_hash = bs.registrar_dispositivo(device.hash_imei, device.estado)
+            if tx_hash:
+                device.tx_hash = tx_hash
+                device.fecha_registro_blockchain = timezone.now()
+                device.save(update_fields=["tx_hash", "fecha_registro_blockchain"])
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error en registro blockchain: {str(e)}", exc_info=True)
+
         return device
 
     @staticmethod
@@ -98,7 +113,22 @@ class DeviceService:
             raise ValueError(f"Estado '{nuevo_estado}' no es válido.")
 
         device.estado = nuevo_estado
-        device.save(update_fields=["estado"])
+        
+        # Registro en Blockchain del nuevo estado
+        try:
+            from apps.devices.blockchain_service import BlockchainService
+            from django.utils import timezone
+            bs = BlockchainService()
+            tx_hash = bs.registrar_dispositivo(device.hash_imei, device.estado)
+            if tx_hash:
+                device.tx_hash = tx_hash
+                device.fecha_registro_blockchain = timezone.now()
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error en registro blockchain: {str(e)}", exc_info=True)
+
+        device.save(update_fields=["estado", "tx_hash", "fecha_registro_blockchain"])
         return device
 
     @staticmethod

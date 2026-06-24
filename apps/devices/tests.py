@@ -207,9 +207,82 @@ class DeviceAITestCase(APITestCase):
         self.assertAlmostEqual(res_data["similitud"], 0.0, places=5)
         self.assertIn("NO coincide con el registro original", res_data["mensaje"])
 
-        # Eliminar archivo físico creado en la carpeta media por la prueba
         if device.url_imagen_referencia:
             try:
                 os.remove(device.url_imagen_referencia.path)
             except OSError:
                 pass
+
+
+class HistorialTrazabilidadTestCase(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="test_trazabilidad_user",
+            correo_electronico="test_trazabilidad@example.com",
+            password="password123",
+            plan_suscripcion="PREMIUM"
+        )
+        self.device = Dispositivo.objects.create(
+            hash_adn_hardware="HW_TRAZ_123",
+            hash_imei="IMEI_TRAZ_123",
+            marca_modelo="Test Phone",
+            id_usuario_propietario=self.user,
+            estado="LIBRE"
+        )
+        refresh = RefreshToken.for_user(self.user)
+        self.token = str(refresh.access_token)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
+
+    def test_report_stolen_creates_traceability_record(self):
+        # Initial state
+        self.assertEqual(self.device.estado, "LIBRE")
+
+        # Call endpoint to report stolen
+        response = self.client.post(
+            "/api/devices/v1/report-stolen/",
+            {
+                "device_id": self.device.id_dispositivo,
+                "motivo": "Robo en la calle"
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        # Refresh device from DB
+        self.device.refresh_from_db()
+        self.assertEqual(self.device.estado, "ROBADO")
+
+        # Verify traceability record was created
+        from apps.devices.models import HistorialTrazabilidad
+        historial = HistorialTrazabilidad.objects.filter(id_celular=self.device)
+        self.assertEqual(historial.count(), 1)
+        
+        registro = historial.first()
+        self.assertEqual(registro.estado_anterior, "LIBRE")
+        self.assertEqual(registro.estado_nuevo, "ROBADO")
+        self.assertEqual(registro.motivo, "Robo en la calle")
+
+    def test_report_state_creates_traceability_record(self):
+        self.assertEqual(self.device.estado, "LIBRE")
+        
+        response = self.client.patch(
+            f"/api/devices/report-state/{self.device.id_dispositivo}/",
+            {
+                "estado": "EXTRAVIADO",
+                "motivo": "Perdido en el transporte público"
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        self.device.refresh_from_db()
+        self.assertEqual(self.device.estado, "EXTRAVIADO")
+
+        from apps.devices.models import HistorialTrazabilidad
+        historial = HistorialTrazabilidad.objects.filter(id_celular=self.device)
+        self.assertEqual(historial.count(), 1)
+        
+        registro = historial.first()
+        self.assertEqual(registro.estado_anterior, "LIBRE")
+        self.assertEqual(registro.estado_nuevo, "EXTRAVIADO")
+        self.assertEqual(registro.motivo, "Perdido en el transporte público")

@@ -6,6 +6,7 @@ from .views import (
     LogoutView,
     UserProfileView,
     UpgradePlanView,
+    VerifyPasswordView,
 )
 
 from rest_framework_simplejwt.views import (
@@ -20,6 +21,7 @@ urlpatterns = [
     path("auth/login/", TokenObtainPairView.as_view(), name="auth-login"),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="auth-refresh"),
     path("auth/logout/", LogoutView.as_view(), name="auth-logout"),
+    path("auth/verify-password/", VerifyPasswordView.as_view(), name="auth-verify-password"),
 
     # PROFILE (usuario autenticado)
     path("profile/get/", UserProfileView.as_view(), name="user-profile-get"),

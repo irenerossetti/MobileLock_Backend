@@ -8,11 +8,12 @@ class DispositivoSerializer(serializers.ModelSerializer):
         model = Dispositivo
         fields = [
             "id_dispositivo",
-            "hash_adn_hardware",
             "hash_imei",
+            "hash_adn_hardware",
             "marca_modelo",
             "url_imagen_referencia",
             "fecha_registro_blockchain",
+            "tx_hash",
             "id_usuario_propietario",
             "estado",
             "hash_visual",
@@ -62,4 +63,25 @@ class HistorialTrazabilidadSerializer(serializers.ModelSerializer):
             "estado_nuevo",
             "fecha_cambio",
             "motivo"
+        ]
+
+
+from apps.devices.models import SolicitudTransferencia
+
+class SolicitudTransferenciaSerializer(serializers.ModelSerializer):
+    dispositivo_info = DispositivoSerializer(source='dispositivo', read_only=True)
+    usuario_origen_email = serializers.CharField(source='usuario_origen.correo_electronico', read_only=True)
+    
+    class Meta:
+        model = SolicitudTransferencia
+        fields = [
+            "id_transferencia",
+            "dispositivo",
+            "dispositivo_info",
+            "usuario_origen",
+            "usuario_origen_email",
+            "usuario_destino",
+            "estado",
+            "fecha_creacion",
+            "fecha_resolucion"
         ]

@@ -16,6 +16,8 @@ class Dispositivo(models.Model):
 
     fecha_registro_blockchain = models.DateTimeField(null=True, blank=True)
 
+    tx_hash = models.CharField(max_length=100, null=True, blank=True)
+
     id_usuario_propietario = models.ForeignKey(
         Usuario,
         on_delete=models.CASCADE,
@@ -91,3 +93,42 @@ class HistorialTrazabilidad(models.Model):
 
     def __str__(self):
         return f"#{self.id_celular.id_dispositivo} ({self.estado_anterior} -> {self.estado_nuevo}) en {self.fecha_cambio}"
+
+
+class SolicitudTransferencia(models.Model):
+    ESTADO_CHOICES = [
+        ("PENDIENTE", "PENDIENTE"),
+        ("ACEPTADA", "ACEPTADA"),
+        ("RECHAZADA", "RECHAZADA"),
+    ]
+
+    id_transferencia = models.AutoField(primary_key=True)
+    dispositivo = models.ForeignKey(
+        Dispositivo,
+        on_delete=models.CASCADE,
+        related_name="transferencias"
+    )
+    usuario_origen = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name="transferencias_enviadas"
+    )
+    usuario_destino = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name="transferencias_recibidas"
+    )
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default="PENDIENTE"
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_resolucion = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "solicitud_transferencia"
+        ordering = ["-fecha_creacion"]
+
+    def __str__(self):
+        return f"Tr {self.id_transferencia}: {self.dispositivo.marca_modelo} ({self.usuario_origen.correo_electronico} -> {self.usuario_destino.correo_electronico})"
